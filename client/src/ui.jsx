@@ -13,7 +13,7 @@ export function currentUser(){try{return JSON.parse(localStorage.getItem('icl_us
 export const hasToken=()=>Boolean(localStorage.getItem('icl_token'))
 
 // Fetch helper with loading/error/reload. `path` null skips the request.
-export function useApi(path,deps=[]){
+export function useApi(path,deps=[],{refreshMs}={}){
  const [state,setState]=useState({data:null,error:null,loading:Boolean(path)})
  const load=useCallback(async(quiet)=>{
   if(!path)return setState({data:null,error:null,loading:false})
@@ -21,6 +21,7 @@ export function useApi(path,deps=[]){
   try{setState({data:await api(path),error:null,loading:false})}catch(e){setState(s=>({data:quiet?s.data:null,error:e.message==='signal is aborted without reason'?'The server did not respond':e.message,loading:false}))}
  },[path]) // eslint-disable-line
  useEffect(()=>{load()},[load,...deps]) // eslint-disable-line
+ useEffect(()=>{if(!refreshMs||!path)return;const t=setInterval(()=>{if(!document.hidden)load(true)},refreshMs);return()=>clearInterval(t)},[load,refreshMs,path])
  return {...state,reload:load}
 }
 
@@ -53,5 +54,11 @@ export function Async({res,children,empty}){
  if(empty&&(!res.data||(Array.isArray(res.data)&&!res.data.length)))return empty
  return children(res.data)
 }
+export function ago(date){
+ if(!date)return ''
+ const s=Math.max(0,Math.round((Date.now()-new Date(date).getTime())/1000))
+ return s<5?'just now':s<60?`${s}s ago`:s<3600?`${Math.round(s/60)} min ago`:`${Math.round(s/3600)} h ago`
+}
+export function useTicker(ms=5000){const [,set]=useState(0);useEffect(()=>{const t=setInterval(()=>set(x=>x+1),ms);return()=>clearInterval(t)},[ms])}
 export const CricLink=({url})=>url?<a className="btn ghost" href={url} target="_blank" rel="noreferrer">View on CricHeroes ↗</a>:null
 export {api}

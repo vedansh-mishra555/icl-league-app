@@ -18,7 +18,17 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: LLM_PROVIDER
+        sync: false
       - key: GROQ_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: XAI_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
         sync: false
       - key: GROQ_MODEL
         value: llama-3.3-70b-versatile

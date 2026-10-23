@@ -9,6 +9,7 @@ import routes from './routes.js';
 import { configureSockets } from './socket.js';
 import { startAuctionTimer } from './services/auction.js';
 import { startSyncCron } from './services/cricheroes.js';
+import { startLiveScoreWorker } from './services/liveScores.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -37,7 +38,7 @@ if (process.env.REDIS_URL) {
 }
 
 connectDb().then(() => {
-  startAuctionTimer(); startSyncCron();
+  startAuctionTimer(); startSyncCron(); startLiveScoreWorker();
   server.listen(config.port, () => console.log(`ICL API listening on ${config.port}`));
 }).catch((error) => { console.error('Startup failed:', error); process.exit(1); });
 

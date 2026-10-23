@@ -1,5 +1,5 @@
 import { Match, Player, Team, Tournament, Auction } from '../models.js';
-import { config } from '../config.js';
+import { chatCompletion, getLlmConfig } from './llm.js';
 
 const cache = new Map();
 const TTL = 30_000;
@@ -73,17 +73,13 @@ export async function askChatbot(question, userKey = 'anonymous') {
   const hit = cache.get(key);
   if (hit && hit.expires > Date.now()) return hit.value;
   let value;
-  if (config.groqKey) {
+  const llm = await getLlmConfig();
+  if (llm) {
     try {
       const context = await leagueContext();
-      const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 8000);
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', signal: controller.signal, headers: { Authorization: `Bearer ${config.groqKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: config.groqModel, temperature: 0.2, max_tokens: 350, messages: [{ role: 'system', content: `You are ICL cricket assistant. Answer concisely in the user's English, Hindi, or Hinglish. Only use this live database context; say when unknown: ${JSON.stringify(context)}` }, { role: 'user', content: question }] }) });
-      clearTimeout(timeout);
-      if (!response.ok) throw new Error(`Groq ${response.status}`);
-      const json = await response.json();
-      const content = json.choices?.[0]?.message?.content;
-      value = content ? { answer: content, mode: 'ai' } : { answer: await regexAnswer(question), mode: 'basic' };
-    } catch { value = { answer: await regexAnswer(question), mode: 'basic' }; }
+      const content = await chatCompletion({ cfg: llm, system: `You are ICL cricket assistant. Answer concisely in the user's English, Hindi, or Hinglish. Only use this live database context; say when unknown: ${JSON.stringify(context)}`, user: question, timeoutMs: 9000 });
+      value = { answer: content, mode: 'ai', provider: llm.provider };
+    } catch (error) { console.error('Chatbot AI fallback:', error.message); value = { answer: await regexAnswer(question), mode: 'basic' }; }
   } else value = { answer: await regexAnswer(question), mode: 'basic' };
   cache.set(key, { value, expires: Date.now() + TTL });
   if (cache.size > 500) for (const [k, v] of cache) if (v.expires < Date.now()) cache.delete(k);

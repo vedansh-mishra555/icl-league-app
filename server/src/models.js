@@ -48,7 +48,7 @@ const PlayerSchema = new Schema({
   team: { type: Schema.Types.ObjectId, ref: 'Team', default: null },
   auctionState: { type: String, enum: ['pending', 'sold', 'unsold', 'skipped'], default: 'pending' },
   approved: { type: Boolean, default: true }, registeredBy: { type: Schema.Types.ObjectId, ref: 'User' },
-  stats: { matches: { type: Number, default: 0 }, runs: { type: Number, default: 0 }, wickets: { type: Number, default: 0 }, strikeRate: { type: Number, default: 0 }, economy: { type: Number, default: 0 } },
+  stats: { matches: { type: Number, default: 0 }, runs: { type: Number, default: 0 }, wickets: { type: Number, default: 0 }, strikeRate: { type: Number, default: 0 }, economy: { type: Number, default: 0 }, innings: Number, notOuts: Number, highestScore: Number, average: Number, fifties: Number, hundreds: Number, fours: Number, sixes: Number, bestBowling: String, bowlingAverage: Number, oversBowled: Number },
   ...sourceFields,
 }, { timestamps: true });
 
@@ -58,6 +58,7 @@ const MatchSchema = new Schema({
   teamA: { type: Schema.Types.ObjectId, ref: 'Team' }, teamB: { type: Schema.Types.ObjectId, ref: 'Team' },
   startsAt: Date, venue: String, status: { type: String, enum: ['upcoming', 'live', 'completed'], default: 'upcoming' },
   innings: [inningsSchema], result: String, currentOver: String, liveMessage: String,
+  liveSync: { type: Boolean, default: false }, live: { type: Schema.Types.Mixed, default: null }, liveUpdatedAt: Date,
   ...sourceFields,
 }, { timestamps: true });
 

@@ -13,7 +13,7 @@ const nav=[['/','Home'],['/teams','Teams'],['/players','Players'],['/matches','M
 function Mark(){const site=useSite();return <Link className="mark" to="/"><span className="mark-icon">{site.logo?<img src={site.logo} alt="" style={{width:'100%',height:'100%',objectFit:'contain'}}/>:'I'}</span><span><b>ICL</b><small>IEM CRICKET LEAGUE</small></span></Link>}
 
 function ScoreStrip(){
- const site=useSite(),home=useApi('/public/home'),m=home.data?.liveMatches?.[0]
+ const site=useSite(),home=useApi('/public/home',[],{refreshMs:30000}),m=home.data?.liveMatches?.[0]
  if(!site.scoreStripEnabled)return null
  if(site.scoreStripText)return <div className="score-strip"><div className="live-tag"><i/> LIVE</div>{site.scoreStripText}</div>
  if(!m)return null

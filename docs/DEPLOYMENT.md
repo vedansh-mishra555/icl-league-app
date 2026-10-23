@@ -22,7 +22,7 @@ Set the following secrets in the Render dashboard:
 - `MONGODB_URI`: MongoDB Atlas connection string
 - `JWT_SECRET`: a long, randomly generated value
 - `CLIENT_URL`: the final Vercel origin, without a trailing slash
-- `GROQ_API_KEY`: optional; when absent or unavailable the chatbot uses Basic mode
+- AI chatbot (optional): set one of `GROQ_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY` (Grok), or `LLM_API_KEY` + `LLM_BASE_URL` for any OpenAI-compatible service. `LLM_PROVIDER`/`LLM_MODEL` pick explicitly. The same can be set at runtime in Admin → AI chatbot, which overrides the environment. With none set, or if the provider fails, the chatbot uses Basic mode
 
 The optional CricHeroes sync is disabled by default. To enable it, set `CRICHEROES_SYNC_ENABLED=true`, add public CricHeroes URLs to league records through admin data, and adjust `CRICHEROES_SYNC_CRON` if needed. It is a scheduled cache refresh, not a request-time scraper.
 

@@ -1,7 +1,7 @@
 import {useMemo,useState} from 'react'
 import {Link,useParams} from 'react-router-dom'
 import {ArrowRight,ChevronRight,Clock,Crown,Gavel,Radio,Search,Sparkles,Trophy,Zap} from 'lucide-react'
-import {Avatar,Async,CricLink,Empty,Metric,PageHero,SectionHead,TeamDot,api,fmtDate,fmtTime,money,useApi,useSite} from './ui'
+import {Avatar,Async,CricLink,Empty,Metric,PageHero,SectionHead,TeamDot,ago,api,fmtDate,fmtTime,money,useApi,useSite,useTicker} from './ui'
 
 const ROLES=['All','Batter','Bowler','All-rounder','Wicketkeeper']
 
@@ -23,7 +23,7 @@ function Leader({title,icon,color,data,metric}){
 }
 
 export function Home(){
- const home=useApi('/public/home'),stats=useApi('/insights/stats'),auction=useApi('/auction/current'),site=useSite()
+ const home=useApi('/public/home',[],{refreshMs:30000}),stats=useApi('/insights/stats'),auction=useApi('/auction/current'),site=useSite()
  return <>
   <section className="hero" style={site.heroImage?{backgroundImage:`linear-gradient(#050d0acc,#050d0aee),url(${site.heroImage})`,backgroundSize:'cover',backgroundPosition:'center'}:undefined}>
    <div className="hero-grid"/>
@@ -96,6 +96,7 @@ export function PlayerDetail(){
   <section className="profile-hero"><Avatar p={p} className="avatar mega"/><div><span className="pill">{p.category}</span><h1>{p.name}</h1><p>{p.role}{p.battingStyle?` · ${p.battingStyle}`:''}{p.bowlingStyle?` · ${p.bowlingStyle}`:''}</p><div className="profile-tags"><span>★ {p.rating} rating</span><span>{p.team?.name||'Unsigned'}</span><span>Base {money(p.basePrice)}</span></div></div><CricLink url={p.cricheroesUrl}/></section>
   <section className="wrap"><div className="metric-grid"><Metric label="MATCHES" value={p.stats?.matches??0}/><Metric label="RUNS" value={p.stats?.runs??0}/><Metric label="WICKETS" value={p.stats?.wickets??0}/><Metric label="STRIKE RATE" value={p.stats?.strikeRate??0}/></div>
    <div className="metric-grid" style={{marginTop:12}}><Metric label="ECONOMY" value={p.stats?.economy??0}/><Metric label="AUCTION STATUS" value={p.auctionState.toUpperCase()}/><Metric label="SOLD FOR" value={p.soldPrice?money(p.soldPrice):'—'}/><Metric label="BASE PRICE" value={money(p.basePrice)}/></div>
+   {(p.stats?.average||p.stats?.highestScore||p.stats?.fifties||p.stats?.sixes||p.stats?.bestBowling)&&<div className="metric-grid" style={{marginTop:12}}>{p.stats.average!=null&&<Metric label="BATTING AVG" value={p.stats.average}/>}{p.stats.highestScore!=null&&<Metric label="HIGHEST SCORE" value={p.stats.highestScore}/>}{p.stats.fifties!=null&&<Metric label="50s / 100s" value={`${p.stats.fifties??0} / ${p.stats.hundreds??0}`}/>}{p.stats.sixes!=null&&<Metric label="4s / 6s" value={`${p.stats.fours??0} / ${p.stats.sixes}`}/>}{p.stats.bestBowling&&<Metric label="BEST BOWLING" value={p.stats.bestBowling}/>}</div>}
    <div className="panel prose"><h2><Sparkles size={18}/> AI INSIGHTS <small style={{opacity:.6,fontSize:12}}>(optional estimate)</small></h2>
     {!ai&&<button className="btn gold" onClick={estimate} disabled={busy}>{busy?'Analysing…':'Predict price & performance'}</button>}
     {ai?.error&&<p className="form-error">{ai.error}</p>}
@@ -104,7 +105,7 @@ export function PlayerDetail(){
 }
 
 export function Matches(){
- const res=useApi('/matches')
+ const res=useApi('/matches',[],{refreshMs:30000})
  return <><PageHero kicker="Fixtures & results" title="MATCH CENTRE" copy="Every fixture, every scorecard, one place."/>
   <Async res={res} empty={<section className="wrap"><Empty title="No matches yet" copy="Fixtures will be published by the organisers."/></section>}>{rows=>{
    const live=rows.filter(m=>m.status==='live'),up=rows.filter(m=>m.status==='upcoming'),done=rows.filter(m=>m.status==='completed').reverse()
@@ -116,13 +117,27 @@ export function Matches(){
      <em>{m.result||'Completed'}</em><ChevronRight/></Link>)}</div>:<Empty title="No results yet" copy="Completed matches appear here."/>}</section>}}</Async></>
 }
 
+export function LivePanel({m}){
+ useTicker()
+ const l=m.live
+ if(m.status!=='live'||!l)return null
+ return <div className="panel" style={{borderColor:'#ff6b61'}}><div className="panel-title"><span className="live-tag"><i/> LIVE</span><small>Updated {ago(m.liveUpdatedAt)} · refreshes every 30s</small></div>
+  {m.liveMessage&&<h3>{m.liveMessage}</h3>}
+  <div className="metric-grid">{l.runRate!==undefined&&<Metric label="RUN RATE" value={l.runRate}/>}{l.projectedScore&&<Metric label="PROJECTED" value={l.projectedScore}/>}{l.requiredRate&&<Metric label="REQUIRED RATE" value={l.requiredRate}/>}{l.partnership&&<Metric label="PARTNERSHIP" value={l.partnership}/>}</div>
+  {l.batters?.map(b=><div className="innings" key={b.name}><span>{b.name}{b.onStrike?' *':''} <strong>{b.runs} ({b.balls})</strong> <small>{b.fours}x4 · {b.sixes}x6 · SR {b.strikeRate}</small></span></div>)}
+  {l.bowler&&<div className="innings"><span>{l.bowler.name} <strong>{l.bowler.wickets}/{l.bowler.runs} ({l.bowler.overs} ov)</strong> <small>Econ {l.bowler.economy}</small></span></div>}
+  {l.recentOver&&<p>This over: <b style={{letterSpacing:2}}>{l.recentOver}</b></p>}
+  {l.lastWicket&&<small>Last wicket: {l.lastWicket}</small>}</div>
+}
+
 export function MatchDetail(){
- const {id}=useParams(),res=useApi(`/matches/${id}`)
+ const {id}=useParams(),res=useApi(`/matches/${id}`,[],{refreshMs:30000})
  return <Async res={res}>{m=>{
   const inn=i=>{const t=i?m.teamB:m.teamA;return m.innings?.find(x=>String(x.team)===String(t?._id))||m.innings?.[i]}
   return <><section className="page-hero"><span className={m.status==='live'?'live-tag':'pill'}>{m.status==='live'&&<i/>} {m.status.toUpperCase()}</span><h1>{m.teamA?.shortName} <em>vs</em> {m.teamB?.shortName}</h1><p>{fmtDate(m.startsAt,{day:'numeric',month:'long',year:'numeric'})} · {m.venue||'Venue TBA'}</p></section>
   <section className="wrap"><div className="scorecard">{[0,1].map(i=>{const t=i?m.teamB:m.teamA,x=inn(i);return <div key={i}><TeamDot team={t}/><h2>{t?.name}</h2><strong>{x?`${x.runs}/${x.wickets}`:'—'}</strong><span>{x?.overs?`${x.overs} OVERS`:''}</span></div>}).reduce((a,b)=>[a,<b key="vs">VS</b>,b])}
    <p>{m.result||m.liveMessage||'Awaiting result'}{m.currentOver?` · Over ${m.currentOver}`:''}</p></div>
+   <LivePanel m={m}/>
    {m.balls?.length>0&&<div className="panel"><h3>BALL BY BALL</h3>{[...m.balls].reverse().slice(0,18).map(b=><div className="innings" key={b._id}><span>{b.innings}.{b.over}.{b.ball} · {b.bowler?.name||'—'} to {b.batter?.name||'—'}<strong>{b.wicket?'WICKET':b.extraType?`${b.extraType} +${b.extraRuns}`:`${b.runs} run${b.runs===1?'':'s'}`}</strong></span></div>)}</div>}
    <CricLink url={m.cricheroesUrl}/></section></>}}</Async>
 }
