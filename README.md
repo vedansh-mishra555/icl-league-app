@@ -22,6 +22,12 @@ A responsive MERN application for the public league website, role-controlled liv
 - Live auction room: socket-synced timer, going once/twice, one-tap bidding, purse/squad checks, SOLD overlay, notifications, auctioneer controls and player pool, projector mode.
 - Statistics, charts, team comparison, leaderboard, per-player and per-team receipts (PDF), player registration with admin approval, and optional heuristic AI (price/performance/rating prediction, squad needs, recommendations).
 
+## Windows one-click install
+
+1. Install [Node.js 20+](https://nodejs.org).
+2. Double-click **`install-icl.bat`** — it installs packages, creates the settings files (with a random secret), and lets you choose a built-in temporary database or your own MongoDB.
+3. Double-click **`run-icl.bat`** whenever you want to start ICL. The site opens at http://localhost:5173 and the admin at http://localhost:5173/admin.
+
 ## Quick start (no MongoDB install)
 
 ```powershell
@@ -92,4 +98,4 @@ More detail:
 
 - Deploy `client` on Vercel with `VITE_API_URL` and `VITE_SOCKET_URL` pointing to Render.
 - Deploy the repository on Render using the included `render.yaml` and configure the variables in `server/.env.example`.
-- Use MongoDB Atlas for `MONGODB_URI`. For multiple backend instances, set `REDIS_URL` to enable the Redis Socket.io adapter, and add shared rate-limit/cache state, and a single cron leader.
+- Use MongoDB Atlas for `MONGODB_URI`. Run a single backend instance.

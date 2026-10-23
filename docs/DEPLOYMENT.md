@@ -58,7 +58,7 @@ Deploy, then update `CLIENT_URL` on Render to the exact Vercel origin and restar
 
 ## Scaling notes
 
-One Render instance is sufficient for a college-league demo. Multiple API instances need a shared Socket.io adapter: set `REDIS_URL` and the Redis adapter is enabled automatically. They also need shared rate-limit/cache state, and single-leader scheduling for the CricHeroes job. MongoDB remains the source of truth for auction state and atomic bid validation.
+One Render instance is sufficient for a college-league demo. Run exactly one API instance: live auction events, rate limits and the CricHeroes/live-score schedulers are held in that process. MongoDB remains the source of truth for auction state and atomic bid validation.
 
 ## Rollback
 

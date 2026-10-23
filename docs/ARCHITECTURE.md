@@ -48,4 +48,4 @@ CricHeroes synchronization runs on a schedule or controlled admin action. Public
 
 ## Deployment topology
 
-Vercel serves static frontend assets. Render runs the long-lived Node process needed for Socket.io and cron. MongoDB Atlas persists shared data. For horizontal scale, add a Redis Socket.io adapter, shared cache/rate-limiter, and ensure exactly one scheduler instance runs each sync job.
+Vercel serves static frontend assets. Render runs the long-lived Node process needed for Socket.io and cron. MongoDB Atlas persists shared data. The app is designed for a single API instance; running several would need a shared Socket.io adapter and single-leader scheduling.

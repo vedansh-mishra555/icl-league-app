@@ -6,7 +6,7 @@ Verified locally on an in-memory MongoDB: auth/roles, bid validation and atomic 
 
 Also verified: CricHeroes sync against real public player, team, tournament and match pages (no API key needed), the 30-second live-score poller against a live scorecard, manual player stats from the admin form, and the AI provider settings (custom/OpenAI-compatible, Gemini and Grok defaults, key encryption, fallback to Basic mode) against a local OpenAI-compatible stub.
 
-Not verified: real responses from Groq, OpenAI, Gemini or Grok (no valid keys), Vercel/Render/Atlas deployment, and multi-instance Redis. Player stats on CricHeroes are intentionally not scraped (entered manually).
+Not verified: real responses from Groq, OpenAI, Gemini or Grok (no valid keys), Vercel/Render/Atlas deployment. Player stats on CricHeroes are intentionally not scraped (entered manually).
 
 ---
 
