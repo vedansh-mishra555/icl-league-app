@@ -1,0 +1,37 @@
+/* Inputs and controls used by the data-driven pages */
+.panel input,.panel select,.filters select,.filters input[type=number],.dashboard-actions select,.auction-page select,.auth-card select,.auth-card input[type=number],.auth-card input[type=url]{background:#0d1814;color:inherit;border:1px solid #ffffff22;border-radius:8px;padding:8px 10px;font:inherit}
+.panel .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.panel .filters input{min-width:180px}
+.btn:disabled,.btn[disabled],.auction-control button:disabled,.bid-button:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.5)}
+.auction-page .bid-stage select{max-width:260px}
+.player-grid.compact{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+
+/* Responsive header (was missing) */
+@media(max-width:1100px){
+ header{padding:0 16px}
+ header nav{display:none;position:absolute;top:76px;left:0;right:0;flex-direction:column;align-items:stretch;gap:2px;padding:12px 16px 18px;background:#07110efa;border-bottom:1px solid var(--line);max-height:calc(100vh - 76px);overflow:auto}
+ header nav.open{display:flex}
+ header nav a{padding:12px 10px}
+ .menu{display:inline-flex;color:inherit}
+}
+@media(max-width:800px){
+ .score-strip{flex-wrap:wrap;gap:6px 10px;padding:8px 14px;font-size:12px}
+ .desktop-login{display:none}
+ .auction-bar{height:auto;flex-wrap:wrap;gap:8px;padding:10px 4%}
+ .auction-tools{flex-wrap:wrap;gap:8px}
+ .lot-panel{padding:18px}
+ .lot-panel .auction-avatar{width:72px;height:72px;font-size:26px;margin:8px auto}
+ .lot-panel h1{font-size:34px}
+ .bid-button{position:sticky;bottom:8px;z-index:5;width:100%}
+ .auction-control{position:sticky;bottom:0;z-index:6}
+ .dashboard-actions{flex-wrap:wrap}
+ .table-card{overflow-x:auto}
+ .tr{min-width:520px}
+ .admin-table-wrap{overflow-x:auto}
+ .toast-stack{left:12px;right:12px}
+}
+@media(max-width:800px){
+ .chat-launch{padding:14px;border-radius:50%}
+ .chat-launch span{display:none}
+ .bid-button{width:calc(100% - 64px)}
+}

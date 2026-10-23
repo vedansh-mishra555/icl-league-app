@@ -24,6 +24,18 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: config.clientUrls, credentials: true } });
 configureSockets(io);
 
+// Optional: share Socket.io events across several API instances.
+if (process.env.REDIS_URL) {
+  const [{ createClient }, { createAdapter }] = await Promise.all([import('redis'), import('@socket.io/redis-adapter')]);
+  const pub = createClient({ url: process.env.REDIS_URL });
+  const sub = pub.duplicate();
+  pub.on('error', (e) => console.error('Redis:', e.message));
+  sub.on('error', (e) => console.error('Redis:', e.message));
+  await Promise.all([pub.connect(), sub.connect()]);
+  io.adapter(createAdapter(pub, sub));
+  console.log('Socket.io Redis adapter enabled');
+}
+
 connectDb().then(() => {
   startAuctionTimer(); startSyncCron();
   server.listen(config.port, () => console.log(`ICL API listening on ${config.port}`));

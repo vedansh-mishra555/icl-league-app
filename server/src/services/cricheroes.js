@@ -20,10 +20,13 @@ const meta = (html, name) => {
 };
 const decode = (v) => v?.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 
+// Site-wide share images are not a team or player photo.
+const genericImage = (url) => (url && !/cricheroes_fb_cover|cricheroes_website_new/i.test(url) ? url : undefined);
+
 // CricHeroes publishes no official public API. We read only what the public page exposes:
 // Open Graph tags, JSON-LD and the embedded Next.js payload when present.
 export function extractPage(html, url) {
-  const out = { url, fetchedAt: new Date(), pageTitle: decode(html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim()), description: decode(meta(html, 'og:description') || meta(html, 'description')), image: meta(html, 'og:image') };
+  const out = { url, fetchedAt: new Date(), pageTitle: decode(html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim()), description: decode(meta(html, 'og:description') || meta(html, 'description')), image: genericImage(meta(html, 'og:image')) };
   for (const [, body] of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try { out.jsonLd = [...(out.jsonLd || []), JSON.parse(body)].slice(0, 5); } catch { /* ignore malformed block */ }
   }
@@ -65,7 +68,7 @@ export async function previewCricHeroes(url, kind = 'player') {
   const stats = clean(numbersFrom(page.pageProps, kind));
   return {
     title: page.pageTitle, description: page.description, image: page.image, stats,
-    foundStructuredData: Boolean(page.pageProps || page.jsonLd),
+    foundStructuredData: Boolean(page.pageProps),
     note: Object.keys(stats).length ? 'Stats detected and will be applied on sync.' : 'Link works. No stats were exposed in the public page; enter them manually. The link still powers the CricHeroes button on the site.',
   };
 }

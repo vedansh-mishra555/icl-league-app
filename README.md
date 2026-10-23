@@ -89,4 +89,4 @@ More detail:
 
 - Deploy `client` on Vercel with `VITE_API_URL` and `VITE_SOCKET_URL` pointing to Render.
 - Deploy the repository on Render using the included `render.yaml` and configure the variables in `server/.env.example`.
-- Use MongoDB Atlas for `MONGODB_URI`. For multiple backend instances, add a Redis Socket.io adapter, shared rate-limit/cache state, and a single cron leader.
+- Use MongoDB Atlas for `MONGODB_URI`. For multiple backend instances, set `REDIS_URL` to enable the Redis Socket.io adapter, and add shared rate-limit/cache state, and a single cron leader.

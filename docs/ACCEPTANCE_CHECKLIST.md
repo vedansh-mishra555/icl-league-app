@@ -1,5 +1,13 @@
 # ICL acceptance checklist
 
+## Verification status (last run)
+
+Verified locally on an in-memory MongoDB: auth/roles, bid validation and atomic selling, undo/skip/unsold/re-auction, timer close, purse and squad updates, stats/analytics/compare/leaderboard/AI endpoints, receipts, registration approval, image upload and gallery, site content, CricHeroes link test/sync against the public site, admin and public pages in a browser (desktop and phone width).
+
+Not verified: Groq responses (no key), Vercel/Render/Atlas deployment, multi-instance Redis, and CricHeroes stats extraction on real player/team pages (the public homepage exposes none).
+
+---
+
 Use this checklist before calling the demo or deployment complete. Items marked optional are not required for the core experience.
 
 ## League website

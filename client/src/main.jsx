@@ -6,6 +6,7 @@ import './styles.css'
 import './inner.css'
 import './admin.css'
 import './admin-extra.css'
+import './polish.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>
