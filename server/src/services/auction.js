@@ -14,8 +14,17 @@ export async function getAuctionState(id) {
   if (!auction) throw httpError(404, 'Auction not found');
   const bids = await Bid.find({ auction: auction._id }).sort({ createdAt: -1 }).limit(30)
     .populate('team', 'name shortName logo').populate('player', 'name').lean();
-  const teams = await Team.find().select('name shortName logo purseStart purseBalance spent squadLimit').lean();
-  return { ...auction, bids, teams, serverTime: new Date() };
+  const [rawTeams, squad] = await Promise.all([
+    Team.find().select('name shortName logo color purseStart purseBalance spent squadLimit').lean(),
+    Player.aggregate([{ $match: { auctionState: 'sold', team: { $ne: null } } }, { $group: { _id: { team: '$team', role: '$role' }, n: { $sum: 1 } } }]),
+  ]);
+  const teams = rawTeams.map((t) => {
+    const byRole = { Batter: 0, Bowler: 0, 'All-rounder': 0, Wicketkeeper: 0 };
+    for (const row of squad) if (String(row._id.team) === String(t._id)) byRole[row._id.role] = row.n;
+    return { ...t, squadSize: Object.values(byRole).reduce((a, b) => a + b, 0), byRole };
+  });
+  const remaining = await Player.countDocuments({ auctionState: { $in: ['pending', 'skipped'] }, approved: { $ne: false } });
+  return { ...auction, bids, teams, remaining, serverTime: new Date() };
 }
 
 async function broadcastState(id) {
@@ -28,6 +37,7 @@ export async function startPlayer(auctionId, playerId, actor, timerSeconds) {
   const player = await Player.findById(playerId);
   if (!player) throw httpError(404, 'Player not found');
   if (player.auctionState === 'sold') throw httpError(409, 'Sold player cannot be auctioned again');
+  if (player.approved === false) throw httpError(409, 'Player registration has not been approved');
   const seconds = Math.min(180, Math.max(5, Number(timerSeconds) || 30));
   const auction = await Auction.findByIdAndUpdate(auctionId, {
     $set: { currentPlayer: player._id, currentBid: player.basePrice, highestBidder: null, status: 'live', phase: 'open', timerSeconds: seconds, endsAt: new Date(Date.now() + seconds * 1000), lastAction: 'player_started', previousState: null },

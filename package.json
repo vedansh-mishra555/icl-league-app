@@ -2,15 +2,18 @@
   "name": "icl-cricket-league",
   "private": true,
   "version": "1.0.0",
-  "workspaces": ["client", "server"],
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
     "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w client\"",
     "build": "npm run build -w client",
     "start": "npm run start -w server",
-    "seed": "npm run seed -w server"
+    "seed": "npm run seed -w server",
+    "dev:mem": "concurrently \"npm run dev:mem -w server\" \"npm run dev -w client\""
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
   }
 }
-

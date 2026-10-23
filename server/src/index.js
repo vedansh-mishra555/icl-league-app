@@ -11,10 +11,11 @@ import { startAuctionTimer } from './services/auction.js';
 import { startSyncCron } from './services/cricheroes.js';
 
 const app = express();
+app.set('trust proxy', 1);
 const origin = (value, callback) => !value || config.clientUrls.includes(value) ? callback(null, true) : callback(new Error('CORS blocked'));
 app.use(cors({ origin, credentials: true }));
 app.use(express.text({ type: ['text/csv', 'application/csv', 'text/plain'], limit: '2mb' }));
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '8mb' }));
 app.use('/api', routes);
 app.use((_req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use(errorHandler);

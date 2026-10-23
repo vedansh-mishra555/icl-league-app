@@ -9,6 +9,8 @@ import { Auction, AuctionEvent, Ball, Bid, Gallery, Match, Player, SyncCache, Te
 import { askChatbot } from './services/chatbot.js';
 import { closeWithoutSale, getAuctionState, pauseAuction, placeBid, reauctionPlayer, resumeAuction, sellPlayer, startPlayer, undoLastBid } from './services/auction.js';
 import adminRoutes from './adminRoutes.js';
+import { publicContent } from './contentRoutes.js';
+import insightRoutes from './insightRoutes.js';
 
 const router = Router();
 const sign = (user) => jwt.sign({ sub: user._id, role: user.role, team: user.team }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
@@ -42,13 +44,16 @@ router.get('/public/home', asyncHandler(async (_req, res) => {
 router.get('/teams', asyncHandler(async (_req, res) => res.json(await Team.find().select('-syncedData -manualOverrides').sort({ name: 1 }).lean())));
 router.get('/teams/:id', asyncHandler(async (req, res) => { const team = await Team.findById(req.params.id).select('-syncedData -manualOverrides').lean(); if (!team) throw httpError(404, 'Team not found'); res.json({ ...team, squad: await Player.find({ team: team._id }).select('-syncedData -manualOverrides').lean() }); }));
 router.get('/players', asyncHandler(async (req, res) => {
-  const filter = {};
+  const filter = { approved: { $ne: false } };
   if (req.query.role) filter.role = req.query.role;
   if (req.query.category) filter.category = req.query.category;
   if (req.query.state) filter.auctionState = req.query.state;
   if (req.query.team) filter.team = req.query.team;
   if (req.query.q) filter.name = { $regex: String(req.query.q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
-  res.json(await Player.find(filter).select('-syncedData -manualOverrides').populate('team', 'name shortName logo').sort({ rating: -1, name: 1 }).lean());
+  const min = Number(req.query.minPrice), max = Number(req.query.maxPrice);
+  if (Number.isFinite(min) || Number.isFinite(max)) filter.basePrice = { ...(Number.isFinite(min) ? { $gte: min } : {}), ...(Number.isFinite(max) ? { $lte: max } : {}) };
+  const sorts = { rating: { rating: -1, name: 1 }, runs: { 'stats.runs': -1, name: 1 }, wickets: { 'stats.wickets': -1, name: 1 }, price: { basePrice: -1, name: 1 }, name: { name: 1 } };
+  res.json(await Player.find(filter).select('-syncedData -manualOverrides').populate('team', 'name shortName logo').sort(sorts[req.query.sort] || sorts.rating).lean());
 }));
 router.get('/players/:id', asyncHandler(async (req, res) => { const row = await Player.findById(req.params.id).select('-syncedData -manualOverrides').populate('team', '-syncedData -manualOverrides').lean(); if (!row) throw httpError(404, 'Player not found'); res.json(row); }));
 router.get('/matches', asyncHandler(async (req, res) => { const f = req.query.status ? { status: req.query.status } : {}; res.json(await Match.find(f).select('-syncedData -manualOverrides').sort({ startsAt: 1 }).populate('teamA teamB tournament', '-syncedData -manualOverrides').lean()); }));
@@ -82,6 +87,8 @@ router.post('/chatbot', chatLimiter, asyncHandler(async (req, res) => {
   res.json(await askChatbot(question, req.ip));
 }));
 
+router.use(publicContent);
+router.use(insightRoutes);
 router.use('/admin', adminRoutes);
 router.post('/scorer/matches/:id/balls', authenticate, authorize('admin', 'auctioneer'), asyncHandler(async (req, res) => {
   const ball = await Ball.create({ ...req.body, match: req.params.id, source: 'scorer' });

@@ -4,11 +4,13 @@ import mongoose from 'mongoose';
 import { authenticate, authorize, asyncHandler, httpError } from './middleware.js';
 import { Auction, AuctionEvent, Ball, Bid, Gallery, Match, Player, Setting, SyncCache, Team, Tournament, User } from './models.js';
 import { getAuctionState, startPlayer } from './services/auction.js';
-import { runCricHeroesSync } from './services/cricheroes.js';
+import { previewCricHeroes, runCricHeroesSync, syncModels, syncRecord } from './services/cricheroes.js';
 import { config } from './config.js';
+import { adminContent } from './contentRoutes.js';
 
 const router = Router();
 router.use(authenticate, authorize('admin'));
+router.use(adminContent);
 
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const pick = (body, fields) => Object.fromEntries(fields.filter((key) => hasOwn(body, key)).map((key) => [key, body[key]]));
@@ -57,7 +59,7 @@ router.get('/teams/:id', asyncHandler(async (req, res) => {
   res.json({ ...team, squad: await Player.find({ team: team._id }).select('-syncedData').sort({ name: 1 }).lean() });
 }));
 router.post('/teams', asyncHandler(async (req, res) => {
-  const data = cleanMedia(pick(req.body, ['name', 'shortName', 'logo', 'color', 'manager', 'purseStart', 'purseBalance', 'spent', 'squadLimit', 'stats', 'cricheroesId', 'cricheroesUrl', 'source', 'manualOverrides']));
+  const data = cleanMedia(pick(req.body, ['name', 'shortName', 'logo', 'color', 'manager', 'captain', 'viceCaptain', 'purseStart', 'purseBalance', 'spent', 'squadLimit', 'stats', 'cricheroesId', 'cricheroesUrl', 'source', 'manualOverrides']));
   omitEmpty(data, ['color', 'purseStart', 'purseBalance', 'spent', 'squadLimit', 'stats', 'source']);
   data.name = cleanText(data.name); data.shortName = cleanText(data.shortName, 10)?.toUpperCase();
   if (data.purseStart != null && data.purseBalance == null) data.purseBalance = data.purseStart;
@@ -84,7 +86,7 @@ router.get('/players', asyncHandler(async (req, res) => {
   res.json(await list(Player, req, filter, Player.find(filter).populate('team', 'name shortName').sort({ name: 1 })));
 }));
 router.get('/players/:id', asyncHandler(async (req, res) => { const row = await Player.findById(ensureObjectId(req.params.id)).populate('team'); if (!row) throw httpError(404, 'Player not found'); res.json(row); }));
-const playerFields = ['name', 'photo', 'role', 'battingStyle', 'bowlingStyle', 'rating', 'category', 'basePrice', 'soldPrice', 'team', 'auctionState', 'stats', 'cricheroesId', 'cricheroesUrl', 'source', 'manualOverrides'];
+const playerFields = ['name', 'photo', 'role', 'battingStyle', 'bowlingStyle', 'rating', 'category', 'basePrice', 'soldPrice', 'team', 'auctionState', 'stats', 'cricheroesId', 'cricheroesUrl', 'source', 'manualOverrides', 'approved'];
 router.post('/players', asyncHandler(async (req, res) => { const data = cleanMedia(pick(req.body, playerFields)); omitEmpty(data, ['rating', 'category', 'soldPrice', 'team', 'auctionState', 'stats', 'source']); data.name = cleanText(data.name); if (data.team) await ensureExists(Team, data.team, 'team'); res.status(201).json(await Player.create(data)); }));
 router.patch('/players/:id', asyncHandler(async (req, res) => { const data = cleanMedia(pick(req.body, playerFields)); omitEmpty(data, ['rating', 'category', 'soldPrice', 'auctionState', 'stats', 'source']); if (data.team === '') data.team = null; if (data.name != null) data.name = cleanText(data.name); if (data.team) await ensureExists(Team, data.team, 'team'); await returnUpdated(Player, req.params.id, data, res, 'team'); }));
 router.delete('/players/:id', asyncHandler(async (req, res) => {
@@ -252,6 +254,17 @@ router.patch('/cricheroes', asyncHandler(async (req, res) => { if (typeof req.bo
 router.post('/cricheroes/sync', asyncHandler(async (_req, res) => res.json(await runCricHeroesSync({ force: true }))));
 router.get('/settings/cricheroes', asyncHandler(async (_req, res) => { const row = await Setting.findOne({ key: 'cricheroesSyncEnabled' }).lean(); res.json({ enabled: row ? Boolean(row.value) : config.syncEnabled }); }));
 router.patch('/settings/cricheroes', asyncHandler(async (req, res) => { if (typeof req.body.enabled !== 'boolean') throw httpError(400, 'enabled must be boolean'); res.json(await Setting.findOneAndUpdate({ key: 'cricheroesSyncEnabled' }, { value: req.body.enabled }, { upsert: true, new: true })); }));
+router.post('/cricheroes/test', asyncHandler(async (req, res) => {
+  try { res.json(await previewCricHeroes(String(req.body.url || ''), req.body.kind)); } catch (error) { throw httpError(400, error.message); }
+}));
+router.post('/cricheroes/sync/:kind/:id', asyncHandler(async (req, res) => {
+  const Model = syncModels[req.params.kind]; if (!Model) throw httpError(400, 'Unknown record type');
+  const record = await Model.findById(ensureObjectId(req.params.id)); if (!record) throw httpError(404, 'Record not found');
+  if (!record.cricheroesUrl) throw httpError(400, 'Add a CricHeroes URL first');
+  const result = await syncRecord(req.params.kind, record);
+  if (!result.ok) throw httpError(502, result.error);
+  res.json({ ...result, record });
+}));
 router.post('/sync/cricheroes', asyncHandler(async (_req, res) => res.json(await runCricHeroesSync({ force: true }))));
 
 export default router;

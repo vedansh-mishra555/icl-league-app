@@ -11,6 +11,23 @@ A responsive MERN application for the public league website, role-controlled liv
 - Groq-powered English/Hindi/Hinglish answers with rate limiting, short-term caching, and regex Basic mode
 - Manual/scorer/CricHeroes data-source fields, scheduled public-page caching, freshness status, and manual override support
 
+## New in this release
+
+- **Admin → Site & media**: drag-and-drop image uploads (stored in MongoDB, auto-resized), one-click publish to the gallery, plus editable hero text, logo, announcement banner, score strip, about/contact/social links and sponsors. Image fields in Teams, Players and Gallery forms have an Upload button.
+- **CricHeroes**: paste a profile/match/team URL in any form and press **Test CricHeroes link** to see what is detected. Scheduled or manual sync reads public page metadata (title, image, description) and any stats exposed in the page's embedded data. CricHeroes has no official public API, so deep stats depend on what its public pages expose; manual values always win.
+- Public site now runs entirely on live API data (no mock content): home, teams, players (search, role/category/price filters, sort by rating/runs/wickets), matches, gallery, rules.
+- Live auction room: socket-synced timer, going once/twice, one-tap bidding, purse/squad checks, SOLD overlay, notifications, auctioneer controls and player pool, projector mode.
+- Statistics, charts, team comparison, leaderboard, per-player and per-team receipts (PDF), player registration with admin approval, and optional heuristic AI (price/performance/rating prediction, squad needs, recommendations).
+
+## Quick start (no MongoDB install)
+
+```powershell
+npm install
+npm run dev:mem
+```
+
+This runs the API on a throwaway in-memory MongoDB seeded with demo data (first run downloads a MongoDB binary). Data resets on restart.
+
 ## Quick start
 
 Prerequisites: Node.js 20 and MongoDB 6+ (local or Atlas).

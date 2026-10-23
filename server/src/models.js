@@ -32,7 +32,7 @@ UserSchema.methods.toJSON = function toJSON() {
 
 const TeamSchema = new Schema({
   name: { type: String, required: true }, shortName: { type: String, required: true },
-  logo: { type: String, validate: optionalWebUrl }, color: { type: String, default: '#f5b942', match: /^#[0-9a-f]{6}$/i }, manager: String,
+  logo: { type: String, validate: optionalWebUrl }, color: { type: String, default: '#f5b942', match: /^#[0-9a-f]{6}$/i }, manager: String, captain: String, viceCaptain: String,
   purseStart: { type: Number, min: 0, default: 100000 }, purseBalance: { type: Number, min: 0, default: 100000 },
   spent: { type: Number, min: 0, default: 0 }, squadLimit: { type: Number, min: 1, max: 50, default: 15 },
   stats: { played: { type: Number, default: 0 }, won: { type: Number, default: 0 }, lost: { type: Number, default: 0 }, nrr: { type: Number, default: 0 }, points: { type: Number, default: 0 } },
@@ -47,6 +47,7 @@ const PlayerSchema = new Schema({
   basePrice: { type: Number, required: true, min: 0 }, soldPrice: { type: Number, min: 0 },
   team: { type: Schema.Types.ObjectId, ref: 'Team', default: null },
   auctionState: { type: String, enum: ['pending', 'sold', 'unsold', 'skipped'], default: 'pending' },
+  approved: { type: Boolean, default: true }, registeredBy: { type: Schema.Types.ObjectId, ref: 'User' },
   stats: { matches: { type: Number, default: 0 }, runs: { type: Number, default: 0 }, wickets: { type: Number, default: 0 }, strikeRate: { type: Number, default: 0 }, economy: { type: Number, default: 0 } },
   ...sourceFields,
 }, { timestamps: true });
@@ -101,6 +102,7 @@ const BallSchema = new Schema({
 BallSchema.index({ match: 1, innings: 1, over: 1, ball: 1 }, { unique: true });
 
 const SyncCacheSchema = new Schema({ key: { type: String, unique: true }, source: String, status: String, payload: Schema.Types.Mixed, error: String, lastUpdatedAt: Date }, { timestamps: true });
+const MediaSchema = new Schema({ name: String, contentType: { type: String, required: true }, size: Number, data: { type: Buffer, required: true }, uploadedBy: { type: Schema.Types.ObjectId, ref: 'User' } }, { timestamps: true });
 const SettingSchema = new Schema({ key: { type: String, unique: true }, value: Schema.Types.Mixed }, { timestamps: true });
 
 export const User = model('User', UserSchema);
@@ -115,3 +117,5 @@ export const Gallery = model('Gallery', GallerySchema);
 export const Ball = model('Ball', BallSchema);
 export const SyncCache = model('SyncCache', SyncCacheSchema);
 export const Setting = model('Setting', SettingSchema);
+
+export const Media = model('Media', MediaSchema);

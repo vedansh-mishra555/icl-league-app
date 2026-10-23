@@ -9,7 +9,8 @@ const teamsData = [
   ['Tech Titans', 'TTN', '#38bdf8'], ['Royal Coders', 'RCD', '#a78bfa'],
 ];
 const teams = [];
-for (const [name, shortName, color] of teamsData) teams.push(await Team.findOneAndUpdate({ shortName }, { name, shortName, color, purseStart: 100000, purseBalance: 100000, spent: 0, squadLimit: 15, stats: { played: 3, won: Math.floor(Math.random() * 3), lost: 1, nrr: Number((Math.random() * 2 - 0.5).toFixed(2)), points: Math.floor(Math.random() * 6) } }, { upsert: true, new: true, setDefaultsOnInsert: true }));
+const leaders = { IEW: ['Aarav Sharma', 'Kabir Singh'], KST: ['Rohan Das', 'Vivaan Roy'], TTN: ['Arjun Mehta', 'Aditya Bose'], RCD: ['Reyansh Gupta', 'Ishaan Paul'] };
+for (const [name, shortName, color] of teamsData) teams.push(await Team.findOneAndUpdate({ shortName }, { name, shortName, color, captain: leaders[shortName][0], viceCaptain: leaders[shortName][1], purseStart: 100000, purseBalance: 100000, spent: 0, squadLimit: 15, stats: { played: 3, won: Math.floor(Math.random() * 3), lost: 1, nrr: Number((Math.random() * 2 - 0.5).toFixed(2)), points: Math.floor(Math.random() * 6) } }, { upsert: true, new: true, setDefaultsOnInsert: true }));
 
 const playerData = [
   ['Aarav Sharma', 'Batter', 'Marquee', 10000, 8.9, 224, 1], ['Rohan Das', 'Bowler', 'Premium', 7500, 8.5, 42, 9],
