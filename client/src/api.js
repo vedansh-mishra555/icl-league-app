@@ -1,4 +1,5 @@
-const ROOT = import.meta.env.VITE_API_URL || 'http://localhost:4000'
+// In production the API serves the built client, so an empty ROOT means "same origin".
+const ROOT = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000' : '')
 export const API = `${ROOT.replace(/\/$/, '')}/api`
 export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || ROOT
 

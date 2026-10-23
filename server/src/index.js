@@ -1,4 +1,7 @@
 import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
 import { Server } from 'socket.io';
@@ -18,6 +21,14 @@ app.use(cors({ origin, credentials: true }));
 app.use(express.text({ type: ['text/csv', 'application/csv', 'text/plain'], limit: '2mb' }));
 app.use(express.json({ limit: '8mb' }));
 app.use('/api', routes);
+
+// Production: serve the built React app from the same origin so the whole site is one URL.
+const clientDist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist, { index: false, maxAge: '1h' }));
+  app.get(/^(?!\/api\/|\/socket\.io\/).*/, (_req, res) => res.sendFile(path.join(clientDist, 'index.html')));
+}
+
 app.use((_req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use(errorHandler);
 
